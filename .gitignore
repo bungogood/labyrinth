@@ -1,0 +1,8 @@
+# Editor
+.vscode/
+
+# Rust
+target/
+
+# Project
+mazes/
