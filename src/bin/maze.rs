@@ -1,8 +1,10 @@
 use clap::Parser;
 use image::Rgb;
-use labyrinth::dfs::dfs;
-use labyrinth::dijkstra::dijkstra;
 use labyrinth::maze::Maze;
+use labyrinth::solver::{
+    heuristic::{astar_heuristic, dfs_heuristic, dijkstra_heuristic, greedy_heuristic},
+    search,
+};
 use std::io;
 use std::path::PathBuf;
 
@@ -14,6 +16,10 @@ struct Args {
 
     // Output file
     output: PathBuf,
+
+    // Animation
+    #[clap(short, long)]
+    animation: bool,
 }
 
 fn main() -> io::Result<()> {
@@ -23,19 +29,16 @@ fn main() -> io::Result<()> {
 
     let (graph, start, end) = maze.parse().unwrap();
 
-    let path = dijkstra(&graph, start, end).unwrap();
+    let context = search(&graph, start, end, dfs_heuristic);
+    // let context = search(&graph, start, end, dijkstra_heuristic);
+    // let context = search(&graph, start, end, greedy_heuristic(&maze));
+    // let context = search(&graph, start, end, astar_heuristic(&maze));
 
-    let full_path = maze.full_path(&graph, &path);
+    if args.animation {
+        maze.gif_explore(&graph, &context, 5000, &args.output);
+    } else {
+        maze.png_explore(&graph, &context, &args.output);
+    }
 
-    maze.draw_path(&full_path, Rgb([0, 255, 0]));
-    maze.draw_path(&path, Rgb([255, 0, 0]));
-    maze.draw(start, Rgb([0, 0, 255]));
-    maze.draw(end, Rgb([0, 0, 255]));
-
-    maze.save(args.output)?;
-
-    println!("Path found: {:?}", path.len());
-
-    // println!("Path found: {:?}", path);
     Ok(())
 }
